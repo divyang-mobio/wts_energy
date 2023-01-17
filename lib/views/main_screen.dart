@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wts_energy/views/safe_screen.dart';
 
 import '../resources/resources.dart';
 
@@ -16,6 +17,7 @@ class _MainScreenState extends State<MainScreen> {
       backgroundColor: Colors.grey.shade300,
       appBar: AppBar(
         backgroundColor: Colors.white,
+        centerTitle: true,
         title: Image.asset('assets/logo.png', height: 120),
         actions: [
           PopupMenuButton<String>(
@@ -72,15 +74,23 @@ potential''',
                       crossAxisSpacing: 2,
                       childAspectRatio: 4 / 3),
                   itemBuilder: (BuildContext context, int index) {
-                    return Card(
-                      child: Center(
-                        child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(data[index].image, height: 50),
-                              const SizedBox(height: 10),
-                              Text(data[index].title)
-                            ]),
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const SafeScreen()));
+                      },
+                      child: Card(
+                        child: Center(
+                          child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(data[index].image, height: 50),
+                                const SizedBox(height: 10),
+                                Text(data[index].title)
+                              ]),
+                        ),
                       ),
                     );
                   },

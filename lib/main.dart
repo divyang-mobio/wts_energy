@@ -17,7 +17,6 @@ class MyApp extends StatelessWidget {
             primarySwatch: Colors.grey,
             appBarTheme: const AppBarTheme(
                 elevation: 0,
-                centerTitle: true,
                 iconTheme: IconThemeData(color: Colors.black))),
         home: const MainScreen());
   }
