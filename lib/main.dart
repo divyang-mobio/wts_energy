@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wts_energy/views/main_screen.dart';
+import 'views/main_screen.dart';
 
 void main() {
   runApp(const MyApp());
