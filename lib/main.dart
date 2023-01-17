@@ -11,9 +11,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Flutter Demo',
+        title: 'Toolbox Suite',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
-            primarySwatch: Colors.blue,
+            primarySwatch: Colors.grey,
             appBarTheme: const AppBarTheme(
                 elevation: 0,
                 centerTitle: true,
