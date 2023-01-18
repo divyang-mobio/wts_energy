@@ -10,3 +10,14 @@ List<DataModel> data = [
   DataModel(image: 'assets/ic_feedback_reports.png', title: 'Reports'),
   DataModel(image: 'assets/ic_safe.png', title: 'Settings'),
 ];
+
+
+
+List<IconData> iconData = [
+  Icons.person_rounded,
+  Icons.category,
+  Icons.directions_run_outlined,
+  Icons.description,
+  Icons.description,
+  Icons.description
+];

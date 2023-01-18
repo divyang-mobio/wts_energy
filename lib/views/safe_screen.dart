@@ -1,8 +1,10 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../controller/drop_down_boc/drop_down_bloc.dart';
+import '../controller/validation_bloc/validation_bloc.dart';
 import '../model/data_model.dart';
+import '../resources/resources.dart';
 
 class SafeScreen extends StatefulWidget {
   const SafeScreen({Key? key}) : super(key: key);
@@ -13,6 +15,7 @@ class SafeScreen extends StatefulWidget {
 
 class _SafeScreenState extends State<SafeScreen> {
   SafeModel? safeModel;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -28,6 +31,155 @@ class _SafeScreenState extends State<SafeScreen> {
     setState(() {});
   }
 
+  Form formView() {
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.only(left: 8, right: 8),
+          child: Column(children: [
+            ListView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: safeModel?.properties?.length,
+                itemBuilder: (context, index) =>
+                    (safeModel?.properties?[index].type == "options")
+                        ? MultiBlocProvider(
+                            providers: [
+                              BlocProvider<ValidationBloc>(
+                                create: (context) => ValidationBloc(),
+                              ),
+                              BlocProvider<DropDownBloc>(
+                                create: (context) => DropDownBloc(),
+                              ),
+                            ],
+                            child: dropDownBlocBuilder(
+                                index: index,
+                                properties: safeModel?.properties?[index]),
+                          )
+                        : (safeModel?.properties?[index].type == "chekbox")
+                            ? checkBoxView(
+                                properties: safeModel?.properties?[index])
+                            : BlocProvider<ValidationBloc>(
+                                create: (context) => ValidationBloc(),
+                                child: textFieldBlocBuilder(
+                                    index: index,
+                                    properties: safeModel?.properties?[index]),
+                              )),
+            const SizedBox(height: 10),
+            ...?safeModel?.buttons?.map((e) => materialButton(context,
+                    onPressed: () {
+                  final isValid = _formKey.currentState?.validate();
+                  if (isValid != false) {
+                    print("submit");
+                    print(safeModel?.properties?[0].selectedOption);
+                    print(safeModel?.properties?[1].selectedOption);
+                    print(safeModel?.properties?[2].selectedOption);
+                    print(safeModel?.properties?[3].selectedOption);
+                  }
+                },
+                    title: e.title ?? "",
+                    color: Color(int.parse("0xff${e.color ?? 'ffff'}"))))
+          ]),
+        ),
+      ),
+    );
+  }
+
+  textFieldBlocBuilder({Properties? properties, required int index}) {
+    return BlocBuilder<ValidationBloc, ValidationState>(
+      builder: (context, state) {
+        if (state is ValidationError) {
+          return TextFieldView(
+              properties: properties,
+              index: index,
+              isError: true,
+              validator: (value) {
+                if (value == '' && properties?.isRequired == "true") {
+                  BlocProvider.of<ValidationBloc>(context)
+                      .add(ValidationInComplete());
+                  return "";
+                } else {
+                  return null;
+                }
+              });
+        } else {
+          return TextFieldView(
+            properties: properties,
+            index: index,
+            validator: (value) {
+              if (value == '' && properties?.isRequired == "true") {
+                BlocProvider.of<ValidationBloc>(context)
+                    .add(ValidationInComplete());
+                return "";
+              } else {
+                return null;
+              }
+            },
+            isError: false,
+          );
+        }
+      },
+    );
+  }
+
+  Padding checkBoxView({Properties? properties}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5.0),
+      child: ListTile(
+        leading: Checkbox(
+          checkColor: Colors.white,
+          value: properties?.isSelected,
+          onChanged: (bool? value) {},
+        ),
+        shape: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey, width: 0.5)),
+        title: Text(
+          properties?.title ?? "",
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(properties?.hint ?? ""),
+      ),
+    );
+  }
+
+  BlocBuilder dropDownBlocBuilder(
+      {Properties? properties, required int index}) {
+    return BlocBuilder<ValidationBloc, ValidationState>(
+      builder: (context, state) {
+        if (state is ValidationError) {
+          return DropDownView(
+              isError: true,
+              index: index,
+              properties: properties,
+              validator: (value) {
+                if (value == null && properties?.isRequired == "true") {
+                  BlocProvider.of<ValidationBloc>(context)
+                      .add(ValidationInComplete());
+                  return '';
+                } else {
+                  return null;
+                }
+              });
+        } else {
+          return DropDownView(
+              isError: false,
+              index: index,
+              properties: properties,
+              validator: (value) {
+                if (value == null && properties?.isRequired == "true") {
+                  BlocProvider.of<ValidationBloc>(context)
+                      .add(ValidationInComplete());
+                  return "";
+                } else {
+                  return null;
+                }
+              });
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return safeModel == null
@@ -41,105 +193,7 @@ class _SafeScreenState extends State<SafeScreen> {
               backgroundColor:
                   Color(int.parse("0xff${safeModel?.color ?? 'ffff'}")),
             ),
-            body: SingleChildScrollView(
-              child: Column(
-                children: [
-                  ListView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemCount: safeModel?.properties?.length,
-                      itemBuilder: (context, index) => (safeModel
-                                  ?.properties?[index].type ==
-                              "options")
-                          ? Padding(
-                              padding: const EdgeInsets.all(5.0),
-                              child: ListTile(
-                                leading: Icon(iconData[index], size: 35),
-                                shape: const UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors.grey, width: 0.5)),
-                                title: Text(
-                                  safeModel?.properties?[index].title ?? "",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                // subtitle: Text(
-                                //     safeModel?.properties?[index].hint ?? ""),
-                                subtitle: SizedBox(
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton(
-                                      hint: Text(
-                                          safeModel?.properties?[index].hint ??
-                                              ""),
-                                      icon:
-                                          const Icon(Icons.keyboard_arrow_down),
-                                      items: safeModel
-                                          ?.properties?[index].options
-                                          ?.map((items) {
-                                        return DropdownMenuItem(
-                                          value: items.title,
-                                          child: Text(items.title.toString(),
-                                              overflow: TextOverflow.clip),
-                                        );
-                                      }).toList(),
-                                      onChanged: (newValue) {},
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            )
-                          : (safeModel?.properties?[index].type == "chekbox")
-                              ? Padding(
-                                  padding: const EdgeInsets.all(5.0),
-                                  child: ListTile(
-                                    leading: Checkbox(
-                                      checkColor: Colors.white,
-                                      value: safeModel
-                                          ?.properties?[index].isSelected,
-                                      onChanged: (bool? value) {},
-                                    ),
-                                    shape: const UnderlineInputBorder(
-                                        borderSide: BorderSide(
-                                            color: Colors.grey, width: 0.5)),
-                                    title: Text(
-                                      safeModel?.properties?[index].title ?? "",
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    subtitle: Text(
-                                        safeModel?.properties?[index].hint ??
-                                            ""),
-                                  ),
-                                )
-                              : Padding(
-                                  padding: const EdgeInsets.all(5.0),
-                                  child: ListTile(
-                                    leading: Icon(iconData[index], size: 35),
-                                    shape: const UnderlineInputBorder(
-                                        borderSide: BorderSide(
-                                            color: Colors.grey, width: 0.5)),
-                                    title: Text(
-                                      safeModel?.properties?[index].title ?? "",
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    subtitle: TextField(
-                                      decoration: InputDecoration(
-                                          border: InputBorder.none,
-                                          hintText: safeModel
-                                              ?.properties?[index].hint),
-                                    ),
-                                  ),
-                                )),
-                  const SizedBox(height: 10),
-                  ...?safeModel?.buttons?.map((e) => materialButton(context,
-                      onPressed: () {},
-                      title: e.title ?? "",
-                      color: Color(int.parse("0xff${e.color ?? 'ffff'}"))))
-                ],
-              ),
-            ),
-          );
+            body: formView());
   }
 }
 
@@ -147,7 +201,7 @@ materialButton(context,
     {required VoidCallback onPressed, required String title, Color? color}) {
   return SizedBox(
     height: 50,
-    width: MediaQuery.of(context).size.width * .9,
+    width: MediaQuery.of(context).size.width,
     child: MaterialButton(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         textColor: Colors.white,
@@ -158,11 +212,123 @@ materialButton(context,
   );
 }
 
-List<IconData> iconData = [
-  Icons.person_rounded,
-  Icons.category,
-  Icons.directions_run_outlined,
-  Icons.description,
-  Icons.description,
-  Icons.description
-];
+class DropDownView extends StatefulWidget {
+  const DropDownView(
+      {Key? key,
+      this.properties,
+      required this.index,
+      required this.validator,
+      required this.isError})
+      : super(key: key);
+
+  final Properties? properties;
+  final int index;
+  final bool isError;
+  final FormFieldValidator validator;
+
+  @override
+  State<DropDownView> createState() => _DropDownViewState();
+}
+
+class _DropDownViewState extends State<DropDownView> {
+  UnderlineInputBorder dropDownBorder() {
+    return const UnderlineInputBorder(
+        borderSide: BorderSide(color: Colors.white));
+  }
+
+  dropDownMenu() {
+    return DropdownButtonFormField(
+        decoration: InputDecoration(
+            errorStyle: const TextStyle(fontSize: 0.1),
+            focusedErrorBorder: dropDownBorder(),
+            errorBorder: dropDownBorder(),
+            focusedBorder: dropDownBorder(),
+            enabledBorder: dropDownBorder()),
+        value: widget.properties?.selectedOption,
+        validator: widget.validator,
+        hint: Text(widget.properties?.hint ?? "",
+            style: TextStyle(
+                color: (widget.isError) ? Colors.red : null,
+                fontWeight: (widget.isError) ? FontWeight.bold : null)),
+        icon: const Icon(Icons.keyboard_arrow_down),
+        items: widget.properties?.options?.map((items) {
+          return DropdownMenuItem(
+            value: items.title,
+            child: Text(items.title.toString(), overflow: TextOverflow.clip),
+          );
+        }).toList(),
+        onChanged: (newValue) {
+          widget.properties?.selectedOption = newValue;
+          BlocProvider.of<DropDownBloc>(context).add(SelectValue());
+        });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: ListTile(
+        leading: Icon(iconData[widget.index], size: 35),
+        shape: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey, width: 0.5)),
+        title: Text(
+          widget.properties?.title ?? "",
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: SizedBox(
+          child: BlocBuilder<DropDownBloc, DropDownState>(
+            builder: (context, state) {
+              if (state is DropDownSelectedValue) {
+                return dropDownMenu();
+              } else {
+                return dropDownMenu();
+              }
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TextFieldView extends StatelessWidget {
+  const TextFieldView(
+      {Key? key,
+      this.properties,
+      required this.isError,
+      required this.validator,
+      required this.index})
+      : super(key: key);
+
+  final Properties? properties;
+  final int index;
+  final bool isError;
+  final FormFieldValidator validator;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5.0),
+      child: ListTile(
+        leading: Icon(iconData[index], size: 35),
+        shape: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey, width: 0.5)),
+        title: Text(
+          properties?.title ?? "",
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: TextFormField(
+          validator: validator,
+          onChanged: (value) => properties?.selectedOption = value,
+          decoration: InputDecoration(
+              errorStyle: const TextStyle(fontSize: 0.1),
+              border: InputBorder.none,
+              hintStyle: TextStyle(
+                  color: (isError) ? Colors.red : null,
+                  fontWeight: (isError) ? FontWeight.bold : null),
+              hintText: properties?.hint),
+        ),
+      ),
+    );
+  }
+}
