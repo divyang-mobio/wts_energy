@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'views/main_screen.dart';
+import 'navigation/routes.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,8 +16,8 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
             primarySwatch: Colors.grey,
             appBarTheme: const AppBarTheme(
-                elevation: 0,
-                iconTheme: IconThemeData(color: Colors.black))),
-        home: const MainScreen());
+                elevation: 0, iconTheme: IconThemeData(color: Colors.black))),
+        onGenerateRoute: RouteGenerator.generateRoute,
+        initialRoute: '/');
   }
 }

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:wts_energy/views/safe_screen.dart';
-
 import '../resources/resources.dart';
 
 class MainScreen extends StatefulWidget {
@@ -14,11 +12,11 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade300,
+      backgroundColor: ColorResources().mainScreenBGColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: ColorResources().mainScreenAppBarColor,
         centerTitle: true,
-        title: Image.asset('assets/logo.png', height: 120),
+        title: Image.asset(AssetImageLink().mainScreenLogoImage, height: 120),
         actions: [
           PopupMenuButton<String>(
             onSelected: (s) {},
@@ -35,32 +33,36 @@ class _MainScreenState extends State<MainScreen> {
       ),
       bottomNavigationBar: BottomAppBar(
         child: Container(
-          color: Colors.grey,
+          color: ColorResources().syncBarBGColor,
           height: 40,
-          child: const Center(child: Text('Last synced 2023-01-16')),
+          child: Center(child: Text(TextResources().syncString)),
         ),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             Stack(children: [
+              SizedBox(
+                  height: MediaQuery.of(context).size.height * .26,
+                  width: MediaQuery.of(context).size.width,
+                  child: Image.asset(AssetImageLink().mainScreenBGImage,
+                      fit: BoxFit.cover)),
               Container(
-                color: Colors.red,
-                height: MediaQuery.of(context).size.height * .26,
-                width: MediaQuery.of(context).size.width,
-              ),
+                  color: ColorResources().mainScreenImageDarkenColor,
+                  height: MediaQuery.of(context).size.height * .26,
+                  width: MediaQuery.of(context).size.width),
               Column(children: [
                 SizedBox(
                   height: MediaQuery.of(context).size.height * .23,
                   width: MediaQuery.of(context).size.width,
-                  child: const Center(
+                  child: Center(
                     child: Text(
-                      '''Toolbox Suite
-Enhance your field
-potential''',
+                      TextResources().headTitle,
                       textAlign: TextAlign.center,
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          color: ColorResources().headTileColor),
                     ),
                   ),
                 ),
@@ -75,12 +77,8 @@ potential''',
                       childAspectRatio: 4 / 3),
                   itemBuilder: (BuildContext context, int index) {
                     return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const SafeScreen()));
-                      },
+                      onTap: () =>
+                          Navigator.pushNamed(context, RouteName().safeScreen),
                       child: Card(
                         child: Center(
                           child: Column(

@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../controller/drop_down_boc/drop_down_bloc.dart';
+import '../controller/select_value_boc/check_box_bloc.dart';
+import '../controller/select_value_boc/drop_down_bloc.dart';
 import '../controller/validation_bloc/validation_bloc.dart';
 import '../model/data_model.dart';
 import '../resources/resources.dart';
@@ -39,33 +40,39 @@ class _SafeScreenState extends State<SafeScreen> {
           padding: const EdgeInsets.only(left: 8, right: 8),
           child: Column(children: [
             ListView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: safeModel?.properties?.length,
-                itemBuilder: (context, index) =>
-                    (safeModel?.properties?[index].type == "options")
-                        ? MultiBlocProvider(
-                            providers: [
-                              BlocProvider<ValidationBloc>(
-                                create: (context) => ValidationBloc(),
-                              ),
-                              BlocProvider<DropDownBloc>(
-                                create: (context) => DropDownBloc(),
-                              ),
-                            ],
-                            child: dropDownBlocBuilder(
-                                index: index,
-                                properties: safeModel?.properties?[index]),
-                          )
-                        : (safeModel?.properties?[index].type == "chekbox")
-                            ? checkBoxView(
-                                properties: safeModel?.properties?[index])
-                            : BlocProvider<ValidationBloc>(
-                                create: (context) => ValidationBloc(),
-                                child: textFieldBlocBuilder(
-                                    index: index,
-                                    properties: safeModel?.properties?[index]),
-                              )),
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              itemCount: safeModel?.properties?.length,
+              itemBuilder: (context, index) =>
+                  (safeModel?.properties?[index].type ==
+                          TypePropertiesData().optionTypeProperties)
+                      ? MultiBlocProvider(
+                          providers: [
+                            BlocProvider<ValidationBloc>(
+                              create: (context) => ValidationBloc(),
+                            ),
+                            BlocProvider<DropDownBloc>(
+                              create: (context) => DropDownBloc(),
+                            ),
+                          ],
+                          child: dropDownBlocBuilder(
+                              index: index,
+                              properties: safeModel?.properties?[index]),
+                        )
+                      : (safeModel?.properties?[index].type ==
+                              TypePropertiesData().checkBoxTypeProperties)
+                          ? BlocProvider<CheckBoxBloc>(
+                              create: (context) => CheckBoxBloc(),
+                              child: checkBoxView(
+                                  properties: safeModel?.properties?[index]),
+                            )
+                          : BlocProvider<ValidationBloc>(
+                              create: (context) => ValidationBloc(),
+                              child: textFieldBlocBuilder(
+                                  index: index,
+                                  properties: safeModel?.properties?[index]),
+                            ),
+            ),
             const SizedBox(height: 10),
             ...?safeModel?.buttons?.map((e) => materialButton(context,
                     onPressed: () {
@@ -76,6 +83,8 @@ class _SafeScreenState extends State<SafeScreen> {
                     print(safeModel?.properties?[1].selectedOption);
                     print(safeModel?.properties?[2].selectedOption);
                     print(safeModel?.properties?[3].selectedOption);
+                    print(safeModel?.properties?[4].selectedOption);
+                    print(safeModel?.properties?[5].selectedOption);
                   }
                 },
                     title: e.title ?? "",
@@ -127,13 +136,22 @@ class _SafeScreenState extends State<SafeScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 5.0),
       child: ListTile(
-        leading: Checkbox(
-          checkColor: Colors.white,
-          value: properties?.isSelected,
-          onChanged: (bool? value) {},
+        leading: BlocBuilder<CheckBoxBloc, CheckBoxState>(
+          builder: (context, state) {
+            return Checkbox(
+              activeColor:
+                  Color(int.parse("0xff${safeModel?.color ?? 'ffff'}")),
+              checkColor: ColorResources().checkBoxUncheckBGColor,
+              value: properties?.selectedOption == "true" ? true : false,
+              onChanged: (bool? value) {
+                properties?.selectedOption = value.toString();
+                BlocProvider.of<CheckBoxBloc>(context)
+                    .add(SelectValueForCheckBox());
+              },
+            );
+          },
         ),
-        shape: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey, width: 0.5)),
+        shape: listTileUnderlineWidget(),
         title: Text(
           properties?.title ?? "",
           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -248,7 +266,9 @@ class _DropDownViewState extends State<DropDownView> {
         validator: widget.validator,
         hint: Text(widget.properties?.hint ?? "",
             style: TextStyle(
-                color: (widget.isError) ? Colors.red : null,
+                color: (widget.isError)
+                    ? ColorResources().requiredFieldErrorColor
+                    : null,
                 fontWeight: (widget.isError) ? FontWeight.bold : null)),
         icon: const Icon(Icons.keyboard_arrow_down),
         items: widget.properties?.options?.map((items) {
@@ -269,8 +289,7 @@ class _DropDownViewState extends State<DropDownView> {
       padding: const EdgeInsets.only(bottom: 5),
       child: ListTile(
         leading: Icon(iconData[widget.index], size: 35),
-        shape: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey, width: 0.5)),
+        shape: listTileUnderlineWidget(),
         title: Text(
           widget.properties?.title ?? "",
           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -278,11 +297,7 @@ class _DropDownViewState extends State<DropDownView> {
         subtitle: SizedBox(
           child: BlocBuilder<DropDownBloc, DropDownState>(
             builder: (context, state) {
-              if (state is DropDownSelectedValue) {
-                return dropDownMenu();
-              } else {
-                return dropDownMenu();
-              }
+              return dropDownMenu();
             },
           ),
         ),
@@ -311,8 +326,7 @@ class TextFieldView extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 5.0),
       child: ListTile(
         leading: Icon(iconData[index], size: 35),
-        shape: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey, width: 0.5)),
+        shape: listTileUnderlineWidget(),
         title: Text(
           properties?.title ?? "",
           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -324,11 +338,19 @@ class TextFieldView extends StatelessWidget {
               errorStyle: const TextStyle(fontSize: 0.1),
               border: InputBorder.none,
               hintStyle: TextStyle(
-                  color: (isError) ? Colors.red : null,
+                  color: (isError)
+                      ? ColorResources().requiredFieldErrorColor
+                      : null,
                   fontWeight: (isError) ? FontWeight.bold : null),
               hintText: properties?.hint),
         ),
       ),
     );
   }
+}
+
+UnderlineInputBorder listTileUnderlineWidget() {
+  return UnderlineInputBorder(
+      borderSide: BorderSide(
+          color: ColorResources().listTileUnderlineColor, width: 0.5));
 }
